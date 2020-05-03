@@ -8,6 +8,7 @@
 #How to run? 
   - run "mvn clean install" for building the project 
   - WynkApplication is the main class
+
 #Exposed api's
 Check respective controller's for detailed signature.
 - /wynk/artist/follow - ArtistController
