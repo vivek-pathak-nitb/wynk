@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Controller for playlist resource.
+ */
 @Controller
 @RequestMapping("/wynk/playlist")
 public class PlaylistController {
@@ -34,20 +37,26 @@ public class PlaylistController {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     @ResponseBody
     public Response getSongs(@RequestParam("user") final String user) {
+        // validate request.
         if (user == null || user.isEmpty()) {
             return ControllerUtility.getBadRequestResponse();
         }
 
         try {
             final UserDbEntity userDbEntity = userDao.getById(user);
-            Set<String> songs = new HashSet<>();
-            for (final String playlist : userDbEntity.getPlaylists()) {
-                songs.addAll(playlistDao.getById(playlist).getSongIds());
-            }
+            final Set<String> songs = getSongs(userDbEntity);
             return new PlaylistSongResponse(Lists.newArrayList(songs));
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
         }
+    }
+
+    private Set<String> getSongs(final UserDbEntity userDbEntity) {
+        Set<String> songs = new HashSet<>();
+        for (final String playlist : userDbEntity.getPlaylists()) {
+            songs.addAll(playlistDao.getById(playlist).getSongIds());
+        }
+        return songs;
     }
 
 }

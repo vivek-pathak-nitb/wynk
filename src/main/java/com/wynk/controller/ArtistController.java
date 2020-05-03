@@ -55,35 +55,29 @@ public class ArtistController {
         final String userId = followArtistRequest.getUser();
         final List<String> artists = followArtistRequest.getArtist();
 
+        // validate request.
         if (userId == null || userId.isEmpty() || artists == null || artists.isEmpty()) {
             return ControllerUtility.getBadRequestResponse();
         }
 
         try {
-            final UserDbEntity userDbEntity = userDao.getById(userId);
-            userDbEntity.getFollows().addAll(artists);
+            userDao.addFollows(userId, Sets.newHashSet(artists));
 
-            final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
-            final Set<String> songs = new HashSet<>();
-            for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
-                artistDbEntity.getFollowers().add(userId);
-                songs.addAll(artistDbEntity.getSongs());
-            }
+            // Add followers to artist.
+            artistDao.addFollower(Sets.newHashSet(artists), userId);
 
+            // update song rank.
+            final Set<String> songs = getSongs(artists);
             songDao.updateRank(songs, 1);
 
+            // Add it to user playlist.
+            final UserDbEntity userDbEntity = userDao.getById(userId);
             addToPlaylist(userDbEntity, songs);
+
             final String message = String.format(FOLLOW_ARTIST_FORMAT, userId, Joiner.on(",").join(artists));
             return new Response("ok", message, HttpStatus.OK.value());
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
-        }
-    }
-
-    private void addToPlaylist(final UserDbEntity userDbEntity,
-                               final Set<String> songs) {
-        for (String playlistId : userDbEntity.getPlaylists()) {
-            playlistDao.getById(playlistId).getSongIds().addAll(songs);
         }
     }
 
@@ -93,22 +87,25 @@ public class ArtistController {
         final String userId = unFollowArtistRequest.getUser();
         final List<String> artists = unFollowArtistRequest.getArtist();
 
+        // Validate request.
         if (userId == null || userId.isEmpty() || artists == null || artists.isEmpty()) {
             return ControllerUtility.getBadRequestResponse();
         }
 
         try {
-            final UserDbEntity userDbEntity = userDao.getById(userId);
-            userDbEntity.getFollows().removeAll(artists);
+            userDao.removeFollows(userId, Sets.newHashSet(artists));
 
-            final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
-            final Set<String> songs = new HashSet<>();
-            for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
-                artistDbEntity.getFollowers().remove(userId);
-                songs.addAll(artistDbEntity.getSongs());
-            }
+            // Remove followers from Artist.
+            artistDao.removeFollower(Sets.newHashSet(artists), userId);
+
+            // Update song rank.
+            final Set<String> songs = getSongs(artists);
             songDao.updateRank(songs, -1);
+
+            // Remove songs from user playlist.
+            final UserDbEntity userDbEntity = userDao.getById(userId);
             removeFromPlaylist(userDbEntity, songs);
+
             final String message = String.format(UN_FOLLOW_ARTIST_FORMAT, userId, Joiner.on(",").join(artists));
             return new Response("ok", message, HttpStatus.OK.value());
         } catch (final Exception ex) {
@@ -116,21 +113,14 @@ public class ArtistController {
         }
     }
 
-    private void removeFromPlaylist(final UserDbEntity userDbEntity,
-                                    final Set<String> songs) {
-        for (String playlistId : userDbEntity.getPlaylists()) {
-            playlistDao.getById(playlistId).getSongIds().removeAll(songs);
-        }
-    }
-
     @RequestMapping(method = RequestMethod.GET, path = "/follow/count")
     @ResponseBody
-    public Response getFollowerCount(@RequestParam("artist") String artist) {
+    public Response getFollowerCount(@RequestParam("artist") final String artist) {
+        // validate request.
         if (artist == null || artist.isEmpty()) {
             return ControllerUtility.getBadRequestResponse();
 
         }
-
         try {
             final ArtistDbEntity artistDbEntity = artistDao.getById(artist);
             return new FollowerCountResponse(artist, artistDbEntity.getFollowers().size());
@@ -143,22 +133,48 @@ public class ArtistController {
     @ResponseBody
     public Response getPopularArtistResponse() {
         try {
-            int max = Integer.MIN_VALUE;
-            ArtistDbEntity res = null;
-            for (ArtistDbEntity artist : artistDao.getAll()) {
-                if (artist.getFollowers().size() > max) {
-                    max = artist.getFollowers().size();
-                    res = artist;
-                }
-            }
-
+            final ArtistDbEntity res = getPopularArtist();
             if (res == null) {
                 return ControllerUtility.getBadRequestResponse();
             }
-
             return new PopularArtistResponse(res.getName());
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
+        }
+    }
+
+    private Set<String> getSongs(List<String> artists) {
+        final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
+        final Set<String> songs = new HashSet<>();
+        for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
+            songs.addAll(artistDbEntity.getSongs());
+        }
+        return songs;
+    }
+
+    private ArtistDbEntity getPopularArtist() {
+        int max = Integer.MIN_VALUE;
+        ArtistDbEntity res = null;
+        for (ArtistDbEntity artist : artistDao.getAll()) {
+            if (artist.getFollowers().size() > max) {
+                max = artist.getFollowers().size();
+                res = artist;
+            }
+        }
+        return res;
+    }
+
+    private void removeFromPlaylist(final UserDbEntity userDbEntity,
+                                    final Set<String> songs) {
+        for (final String playlistId : userDbEntity.getPlaylists()) {
+            playlistDao.removeSongs(playlistId, songs);
+        }
+    }
+
+    private void addToPlaylist(final UserDbEntity userDbEntity,
+                               final Set<String> songs) {
+        for (String playlistId : userDbEntity.getPlaylists()) {
+            playlistDao.addSongs(playlistId, songs);
         }
     }
 }

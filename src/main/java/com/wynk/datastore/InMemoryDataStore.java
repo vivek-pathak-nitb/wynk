@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This is our in-memory data store holding dummy values. This is get initialized at the application start up and is
+ * consumed by respective dao.
+ */
 public class InMemoryDataStore {
 
     public static final Map<String, SongDbEntity> SONG_MAP = new HashMap<>();

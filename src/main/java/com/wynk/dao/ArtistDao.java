@@ -26,4 +26,28 @@ public class ArtistDao {
     public Set<ArtistDbEntity> getAll() {
         return Sets.newHashSet(InMemoryDataStore.ARTIST_DB_ENTITY_MAP.values());
     }
+
+    public void addSong(final Set<String> artists,
+                        final String song) {
+        final Set<ArtistDbEntity> artistDbEntities = getByIds(artists);
+        for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
+            artistDbEntity.getSongs().add(song);
+        }
+    }
+
+    public void addFollower(final Set<String> ids,
+                            final String userId) {
+        final Set<ArtistDbEntity> artistDbEntities = getByIds(ids);
+        for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
+            artistDbEntity.getFollowers().add(userId);
+        }
+    }
+
+    public void removeFollower(final Set<String> ids,
+                               final String userId) {
+        final Set<ArtistDbEntity> artistDbEntities = getByIds(ids);
+        for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
+            artistDbEntity.getFollowers().remove(userId);
+        }
+    }
 }

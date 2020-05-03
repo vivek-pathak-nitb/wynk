@@ -11,6 +11,7 @@ import com.wynk.entities.request.PublishSongRequest;
 import com.wynk.entities.response.PopularSongResponse;
 import com.wynk.entities.response.Response;
 import com.wynk.utilities.ControllerUtility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Controller for the song resource.
+ */
 @Controller
 @RequestMapping("/wynk/song")
 public class SongController {
@@ -30,6 +34,7 @@ public class SongController {
     private final UserDao userDao;
     private final PlaylistDao playlistDao;
 
+    @Autowired
     public SongController(final SongDao songDao,
                           final ArtistDao artistDao,
                           final UserDao userDao,
@@ -45,6 +50,7 @@ public class SongController {
     public Response publishSong(@RequestBody final PublishSongRequest publishSongRequest) {
         final String song = publishSongRequest.getSong();
         final List<String> artists = publishSongRequest.getArtists();
+        // Validate request.
         if (song == null || song.isEmpty() || artists == null || artists.isEmpty()) {
             return ControllerUtility.getBadRequestResponse();
         }
@@ -53,10 +59,13 @@ public class SongController {
             final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
             final Set<String> followers = getFollowers(artistDbEntities);
             final SongDbEntity songDbEntity = songDao.createSong(song, Sets.newHashSet(artists), followers.size());
-            updateArtist(artistDbEntities, songDbEntity);
 
+            // update artist with od of new song.
+            artistDao.addSong(Sets.newHashSet(artists), songDbEntity.getId());
+
+            // update user playlist who follow this artist.
             final Set<String> playlists = getFollowersPlaylist(followers);
-            updateUserPlaylist(songDbEntity, playlists);
+            playlistDao.addSong(songDbEntity.getId(), playlists);
 
             return new Response("ok", "Song published against artist", HttpStatus.OK.value());
         } catch (final Exception ex) {
@@ -64,11 +73,31 @@ public class SongController {
         }
     }
 
-    private void updateArtist(final Set<ArtistDbEntity> artistDbEntities,
-                              final SongDbEntity songDbEntity) {
-        for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
-            artistDbEntity.getSongs().add(songDbEntity.getId());
+    @RequestMapping(method = RequestMethod.GET, path = "/popular")
+    @ResponseBody
+    public Response getPopularSong() {
+        try {
+            final Set<SongDbEntity> songDbEntities = songDao.getAll();
+            final SongDbEntity res = getPopularSong(songDbEntities);
+            if (res == null) {
+                return ControllerUtility.getBadRequestResponse();
+            }
+            return new PopularSongResponse(res.getName());
+        } catch (final Exception ex) {
+            return ControllerUtility.getBadRequestResponse();
         }
+    }
+
+    private SongDbEntity getPopularSong(final Set<SongDbEntity> songDbEntities) {
+        int max = Integer.MIN_VALUE;
+        SongDbEntity res = null;
+        for (final SongDbEntity songDbEntity : songDbEntities) {
+            if (max < songDbEntity.getRank()) {
+                max = songDbEntity.getRank();
+                res = songDbEntity;
+            }
+        }
+        return res;
     }
 
     private Set<String> getFollowers(final Set<ArtistDbEntity> artistDbEntities) {
@@ -79,41 +108,11 @@ public class SongController {
         return followers;
     }
 
-    private void updateUserPlaylist(final SongDbEntity songDbEntity,
-                                    final Set<String> playlists) {
-        for (final String playlist : playlists) {
-            playlistDao.getById(playlist).getSongIds().add(songDbEntity.getId());
-        }
-    }
-
     private Set<String> getFollowersPlaylist(final Set<String> followers) {
         final Set<String> playlists = Sets.newHashSet();
         for (final String follower : followers) {
             playlists.addAll(userDao.getById(follower).getPlaylists());
         }
         return playlists;
-    }
-
-    @RequestMapping(method = RequestMethod.GET, path = "/popular")
-    @ResponseBody
-    public Response getPopularSong() {
-        try {
-            final Set<SongDbEntity> songDbEntities = songDao.getAll();
-            int max = Integer.MIN_VALUE;
-            SongDbEntity res = null;
-            for (final SongDbEntity songDbEntity : songDbEntities) {
-                if (max < songDbEntity.getRank()) {
-                    max = songDbEntity.getRank();
-                    res = songDbEntity;
-                }
-            }
-
-            if (res == null) {
-                return ControllerUtility.getBadRequestResponse();
-            }
-            return new PopularSongResponse(res.getName());
-        } catch (final Exception ex) {
-            return ControllerUtility.getBadRequestResponse();
-        }
     }
 }
