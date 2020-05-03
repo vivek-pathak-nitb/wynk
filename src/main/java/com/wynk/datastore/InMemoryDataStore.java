@@ -1,5 +1,6 @@
 package com.wynk.datastore;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.wynk.entities.db.ArtistDbEntity;
 import com.wynk.entities.db.PlaylistDbEntity;
@@ -25,23 +26,13 @@ public class InMemoryDataStore {
     private static final String SONG_1 = "s1";
     private static final String SONG_2 = "s2";
     private static final String SONG_3 = "s3";
+    private static final String PLAY_LIST_1 = "p1";
+    private static final String PLAY_LIST_2 = "p2";
+    private static final String PLAY_LIST_3 = "p3";
 
     public static void createDummyData() {
-        // Creating user
-        final UserDbEntity user1 = createUser(USER_1, USER_1, Sets.newHashSet(ARTIST_1));
-        final UserDbEntity user2 = createUser(USER_2, USER_2, Sets.newHashSet(ARTIST_1, ARTIST_2));
-        final UserDbEntity user3 = createUser(USER_3, USER_3, Sets.newHashSet(ARTIST_1));
-        USER_DB_ENTITY_MAP.put(USER_1, user1);
-        USER_DB_ENTITY_MAP.put(USER_2, user2);
-        USER_DB_ENTITY_MAP.put(USER_3, user3);
-
         // Creating songs
-        final SongDbEntity song1 = createSong(SONG_1, SONG_1, Sets.newHashSet(ARTIST_1, ARTIST_2));
-        final SongDbEntity song2 = createSong(SONG_2, SONG_2, Sets.newHashSet(ARTIST_2));
-        final SongDbEntity song3 = createSong(SONG_3, SONG_3, Sets.newHashSet(ARTIST_1, ARTIST_2));
-        SONG_MAP.put(SONG_1, song1);
-        SONG_MAP.put(SONG_2, song2);
-        SONG_MAP.put(SONG_3, song3);
+        createSongs();
 
         // Creating artists
         final ArtistDbEntity artist1 = createArtist(ARTIST_1, ARTIST_1, Sets.newHashSet(SONG_1, SONG_3),
@@ -50,6 +41,41 @@ public class InMemoryDataStore {
                 Sets.newHashSet(USER_2));
         ARTIST_DB_ENTITY_MAP.put(ARTIST_1, artist1);
         ARTIST_DB_ENTITY_MAP.put(ARTIST_2, artist2);
+
+        // Create Playlist
+        createPlaylist(artist1, artist2);
+
+        // Creating user
+        createUsers();
+    }
+
+    private static void createSongs() {
+        final SongDbEntity song1 = createSong(SONG_1, SONG_1, Sets.newHashSet(ARTIST_1, ARTIST_2));
+        final SongDbEntity song2 = createSong(SONG_2, SONG_2, Sets.newHashSet(ARTIST_2));
+        final SongDbEntity song3 = createSong(SONG_3, SONG_3, Sets.newHashSet(ARTIST_1, ARTIST_2));
+        SONG_MAP.put(SONG_1, song1);
+        SONG_MAP.put(SONG_2, song2);
+        SONG_MAP.put(SONG_3, song3);
+    }
+
+    private static void createUsers() {
+        final UserDbEntity user1 = createUser(USER_1, USER_1, Sets.newHashSet(ARTIST_1), Sets.newHashSet(PLAY_LIST_1));
+        final UserDbEntity user2 = createUser(USER_2, USER_2, Sets.newHashSet(ARTIST_1, ARTIST_2), Sets.newHashSet(PLAY_LIST_2));
+        final UserDbEntity user3 = createUser(USER_3, USER_3, Sets.newHashSet(ARTIST_1), Sets.newHashSet(PLAY_LIST_3));
+        USER_DB_ENTITY_MAP.put(USER_1, user1);
+        USER_DB_ENTITY_MAP.put(USER_2, user2);
+        USER_DB_ENTITY_MAP.put(USER_3, user3);
+    }
+
+    private static void createPlaylist(final ArtistDbEntity artist1,
+                                       final ArtistDbEntity artist2) {
+        final PlaylistDbEntity playlist1 = new PlaylistDbEntity(PLAY_LIST_1, Sets.newHashSet(artist1.getSongs()));
+        final PlaylistDbEntity playlist2 = new PlaylistDbEntity(PLAY_LIST_2,
+                Sets.newHashSet(Iterables.concat(artist1.getSongs(), artist2.getSongs())));
+        final PlaylistDbEntity playlist3 = new PlaylistDbEntity(PLAY_LIST_3, Sets.newHashSet(artist1.getSongs()));
+        PLAYLIST_DB_ENTITY_MAP.put(PLAY_LIST_1, playlist1);
+        PLAYLIST_DB_ENTITY_MAP.put(PLAY_LIST_2, playlist2);
+        PLAYLIST_DB_ENTITY_MAP.put(PLAY_LIST_3, playlist3);
     }
 
     private static SongDbEntity createSong(final String id,
@@ -65,7 +91,10 @@ public class InMemoryDataStore {
         return new ArtistDbEntity(id, name, songs, followers);
     }
 
-    private static UserDbEntity createUser(String id, String name, Set<String> follows) {
-        return new UserDbEntity(id, name, follows);
+    private static UserDbEntity createUser(final String id,
+                                           final String name,
+                                           final Set<String> follows,
+                                           final Set<String> playlists) {
+        return new UserDbEntity(id, name, follows, playlists);
     }
 }

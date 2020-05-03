@@ -1,10 +1,11 @@
 package com.wynk.entities.response;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public class PopularSongResponse extends Response {
 
-@Data
-@NoArgsConstructor
-public class PopularSongResponse {
-    private String song;
+    private final String song;
+
+    public PopularSongResponse(final String song) {
+        super(null, null, 200);
+        this.song = song;
+    }
 }

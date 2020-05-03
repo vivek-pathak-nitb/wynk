@@ -11,4 +11,5 @@ public class UserDbEntity {
     private String id;
     private String name;
     private Set<String> follows;
+    private Set<String> playlists;
 }

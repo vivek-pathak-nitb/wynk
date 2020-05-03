@@ -1,12 +1,13 @@
 package com.wynk.entities.response;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.Set;
 
-@Data
-@NoArgsConstructor
-public class PlaylistSongResponse {
-    private Set<String> songs;
+public class PlaylistSongResponse extends Response {
+
+    private final Set<String> songs;
+
+    public PlaylistSongResponse(final Set<String> songs) {
+        super(null, null, 200);
+        this.songs = songs;
+    }
 }
