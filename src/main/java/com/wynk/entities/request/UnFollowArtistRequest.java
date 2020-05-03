@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class FollowArtistRequest {
+public class UnFollowArtistRequest {
     private String user;
     private List<String> artist;
 }
