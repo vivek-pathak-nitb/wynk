@@ -11,4 +11,5 @@ public class SongDbEntity {
     private String id;
     private String name;
     private Set<String> artists;
+    private int rank;
 }

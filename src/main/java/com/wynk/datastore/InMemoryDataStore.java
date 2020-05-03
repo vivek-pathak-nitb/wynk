@@ -50,9 +50,9 @@ public class InMemoryDataStore {
     }
 
     private static void createSongs() {
-        final SongDbEntity song1 = createSong(SONG_1, SONG_1, Sets.newHashSet(ARTIST_1, ARTIST_2));
-        final SongDbEntity song2 = createSong(SONG_2, SONG_2, Sets.newHashSet(ARTIST_2));
-        final SongDbEntity song3 = createSong(SONG_3, SONG_3, Sets.newHashSet(ARTIST_1, ARTIST_2));
+        final SongDbEntity song1 = createSong(SONG_1, SONG_1, Sets.newHashSet(ARTIST_1, ARTIST_2), 3);
+        final SongDbEntity song2 = createSong(SONG_2, SONG_2, Sets.newHashSet(ARTIST_2), 1);
+        final SongDbEntity song3 = createSong(SONG_3, SONG_3, Sets.newHashSet(ARTIST_1, ARTIST_2), 3);
         SONG_MAP.put(SONG_1, song1);
         SONG_MAP.put(SONG_2, song2);
         SONG_MAP.put(SONG_3, song3);
@@ -80,8 +80,9 @@ public class InMemoryDataStore {
 
     private static SongDbEntity createSong(final String id,
                                            final String name,
-                                           final Set<String> artists) {
-        return new SongDbEntity(id, name, artists);
+                                           final Set<String> artists,
+                                           final int rank) {
+        return new SongDbEntity(id, name, artists, rank);
     }
 
     private static ArtistDbEntity createArtist(String id,

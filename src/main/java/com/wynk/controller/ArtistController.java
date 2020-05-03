@@ -1,8 +1,10 @@
 package com.wynk.controller;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Sets;
 import com.wynk.dao.ArtistDao;
 import com.wynk.dao.PlaylistDao;
+import com.wynk.dao.SongDao;
 import com.wynk.dao.UserDao;
 import com.wynk.entities.db.ArtistDbEntity;
 import com.wynk.entities.db.UserDbEntity;
@@ -34,14 +36,17 @@ public class ArtistController {
     private final ArtistDao artistDao;
     private final UserDao userDao;
     private final PlaylistDao playlistDao;
+    private final SongDao songDao;
 
     @Autowired
     public ArtistController(final ArtistDao artistDao,
                             final UserDao userDao,
-                            final PlaylistDao playlistDao) {
+                            final PlaylistDao playlistDao,
+                            final SongDao songDao) {
         this.artistDao = artistDao;
         this.userDao = userDao;
         this.playlistDao = playlistDao;
+        this.songDao = songDao;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/follow")
@@ -58,21 +63,27 @@ public class ArtistController {
             final UserDbEntity userDbEntity = userDao.getById(userId);
             userDbEntity.getFollows().addAll(artists);
 
-            Set<String> songs = new HashSet<>();
-            for (final String artist : artists) {
-                final ArtistDbEntity artistDbEntity = artistDao.getById(artist);
+            final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
+            final Set<String> songs = new HashSet<>();
+            for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
                 artistDbEntity.getFollowers().add(userId);
                 songs.addAll(artistDbEntity.getSongs());
             }
 
-            for (String playlistId : userDbEntity.getPlaylists()) {
-                playlistDao.getById(playlistId).getSongIds().addAll(songs);
-            }
+            songDao.updateRank(songs, 1);
 
+            addToPlaylist(userDbEntity, songs);
             final String message = String.format(FOLLOW_ARTIST_FORMAT, userId, Joiner.on(",").join(artists));
             return new Response("ok", message, HttpStatus.OK.value());
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
+        }
+    }
+
+    private void addToPlaylist(final UserDbEntity userDbEntity,
+                               final Set<String> songs) {
+        for (String playlistId : userDbEntity.getPlaylists()) {
+            playlistDao.getById(playlistId).getSongIds().addAll(songs);
         }
     }
 
@@ -90,20 +101,25 @@ public class ArtistController {
             final UserDbEntity userDbEntity = userDao.getById(userId);
             userDbEntity.getFollows().removeAll(artists);
 
-            Set<String> songs = new HashSet<>();
-            for (final String artist : artists) {
-                final ArtistDbEntity artistDbEntity = artistDao.getById(artist);
+            final Set<ArtistDbEntity> artistDbEntities = artistDao.getByIds(Sets.newHashSet(artists));
+            final Set<String> songs = new HashSet<>();
+            for (final ArtistDbEntity artistDbEntity : artistDbEntities) {
                 artistDbEntity.getFollowers().remove(userId);
                 songs.addAll(artistDbEntity.getSongs());
             }
-
-            for (String playlistId : userDbEntity.getPlaylists()) {
-                playlistDao.getById(playlistId).getSongIds().removeAll(songs);
-            }
+            songDao.updateRank(songs, -1);
+            removeFromPlaylist(userDbEntity, songs);
             final String message = String.format(UN_FOLLOW_ARTIST_FORMAT, userId, Joiner.on(",").join(artists));
             return new Response("ok", message, HttpStatus.OK.value());
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
+        }
+    }
+
+    private void removeFromPlaylist(final UserDbEntity userDbEntity,
+                                    final Set<String> songs) {
+        for (String playlistId : userDbEntity.getPlaylists()) {
+            playlistDao.getById(playlistId).getSongIds().removeAll(songs);
         }
     }
 
