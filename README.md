@@ -1,0 +1,2 @@
+- How to run? 
+  - run "mvn clean install" for compiling the project 

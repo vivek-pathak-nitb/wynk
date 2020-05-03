@@ -1,5 +1,6 @@
 package com.wynk.controller;
 
+import com.google.common.collect.Lists;
 import com.wynk.dao.PlaylistDao;
 import com.wynk.dao.UserDao;
 import com.wynk.entities.db.UserDbEntity;
@@ -43,7 +44,7 @@ public class PlaylistController {
             for (final String playlist : userDbEntity.getPlaylists()) {
                 songs.addAll(playlistDao.getById(playlist).getSongIds());
             }
-            return new PlaylistSongResponse(songs);
+            return new PlaylistSongResponse(Lists.newArrayList(songs));
         } catch (final Exception ex) {
             return ControllerUtility.getBadRequestResponse();
         }

@@ -2,7 +2,9 @@ package com.wynk.dao;
 
 import com.wynk.datastore.InMemoryDataStore;
 import com.wynk.entities.db.PlaylistDbEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PlaylistDao {
 
     public PlaylistDbEntity getById(final String id) {

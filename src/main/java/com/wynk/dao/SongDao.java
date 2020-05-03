@@ -3,9 +3,11 @@ package com.wynk.dao;
 import com.google.common.collect.Sets;
 import com.wynk.datastore.InMemoryDataStore;
 import com.wynk.entities.db.SongDbEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
+@Component
 public class SongDao {
 
     public SongDbEntity createSong(final String name,

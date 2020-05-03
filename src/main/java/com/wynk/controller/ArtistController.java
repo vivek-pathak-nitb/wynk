@@ -139,7 +139,7 @@ public class ArtistController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/follow/popular")
+    @RequestMapping(method = RequestMethod.GET, path = "/popular")
     @ResponseBody
     public Response getPopularArtistResponse() {
         try {

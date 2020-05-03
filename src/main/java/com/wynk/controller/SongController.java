@@ -94,7 +94,7 @@ public class SongController {
         return playlists;
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "/popular")
+    @RequestMapping(method = RequestMethod.GET, path = "/popular")
     @ResponseBody
     public Response getPopularSong() {
         try {

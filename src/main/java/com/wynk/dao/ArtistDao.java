@@ -3,10 +3,12 @@ package com.wynk.dao;
 import com.google.common.collect.Sets;
 import com.wynk.datastore.InMemoryDataStore;
 import com.wynk.entities.db.ArtistDbEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@Component
 public class ArtistDao {
 
     public ArtistDbEntity getById(final String id) {
