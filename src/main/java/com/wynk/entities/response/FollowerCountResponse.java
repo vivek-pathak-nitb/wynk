@@ -1,11 +1,14 @@
 package com.wynk.entities.response;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public class FollowerCountResponse extends Response {
 
-@Data
-@NoArgsConstructor
-public class FollowerCountResponse {
     private String artist;
-    private String count;
+    private int count;
+
+    public FollowerCountResponse(final String artist,
+                                 final int count) {
+        super(null, null, 200);
+        this.artist = artist;
+        this.count = count;
+    }
 }

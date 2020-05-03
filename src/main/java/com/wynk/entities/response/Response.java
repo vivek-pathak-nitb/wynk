@@ -1,11 +1,10 @@
 package com.wynk.entities.response;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Data
-@NoArgsConstructor
+@AllArgsConstructor
 public class Response {
     private String status;
     private String message;
+    private int code;
 }
